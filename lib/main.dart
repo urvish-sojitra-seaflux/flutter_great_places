@@ -1,90 +1,97 @@
 import 'package:flutter/material.dart';
-import 'package:maps/maps.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import './src/locations.dart' as locations;
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final Map<String, Marker> _markers = {};
+  Future<void> _onMapCreated(GoogleMapController controller) async {
+    final googleOffices = await locations.getGoogleOffices();
+    setState(() {
+      _markers.clear();
+      for (final office in googleOffices.offices) {
+        final marker = Marker(
+          markerId: MarkerId(office.name),
+          position: LatLng(office.lat, office.lng),
+          infoWindow: InfoWindow(
+            title: office.name,
+            snippet: office.address,
+          ),
+        );
+        _markers[office.name] = marker;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Maps'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            Container(
-              height: 400,
-              width: 450,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black, width: 1),
-                color: Colors.white,
-              ),
-              child: const Center(
-                child: Text("No location has been choosen"),
-              ),
+      home: Scaffold(
+        body: Stack(children: [
+          GoogleMap(
+            myLocationButtonEnabled: true,
+            myLocationEnabled: true,
+            buildingsEnabled: true,
+            mapType: MapType.normal,
+            zoomControlsEnabled: true,
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: const CameraPosition(
+              target: LatLng(0, 0),
+              zoom: 4,
             ),
-            const SizedBox(
-              height: 10,
-            ),
-            FittedBox(
-              fit: BoxFit.cover,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    },
-                    icon: const Icon(Icons.location_on),
-                  ),
-                  const Text('Current Location'),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MapsScreen()));
-                    },
-                    icon: const Icon(Icons.map),
-                  ),
-                  const Text(
-                    'Select on Map',
-                    maxLines: 2,
-                  ),
-                ],
+            markers: _markers.values.toSet(),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 50),
+            child: TextFormField(
+              keyboardAppearance: Brightness.dark,
+              autofillHints: const [
+                "Delhi",
+                "Delhi",
+                "Delhi",
+                "Delhi",
+                "Delhi",
+                "Delhi",
+                "Delhi",
+                "Delhi",
+                "Delhi",
+                "Delhi",
+                "Delhi",
+              ],
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                focusColor: Colors.black12,
+                focusedBorder: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(50)),
+                    borderSide: BorderSide(color: Colors.green),
+                    gapPadding: 5.0),
+                suffixIcon: const Icon(Icons.search),
+                constraints: BoxConstraints.loose(const Size(500, 100)),
+                prefixIcon: const Icon(Icons.location_on),
+                prefixIconColor: Colors.black,
+                contentPadding: const EdgeInsets.all(10),
+                hintStyle: const TextStyle(fontSize: 12),
+                hintText: "Search your Destination",
+                border: const OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(50)),
+                    borderSide: BorderSide(color: Colors.black12),
+                    gapPadding: 5.0),
+                fillColor: Colors.white,
+                filled: true,
               ),
             ),
-          ],
-        ),
+          ),
+        ]),
       ),
     );
   }
